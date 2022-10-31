@@ -9,7 +9,7 @@ beerComm <- read.csv(file="~/Desktop/CU_Research/wildBeer/project_data_and_tutor
 beerMeta <- read.delim(file="~/Desktop/CU_Research/wildBeer/project_data_and_tutorials/data/2022_10_12_WildBeer_metadata.tsv", sep="\t", header=TRUE) #metadata
 head(beerComm)
 head(beerMeta)
-View(beerComm)
+#View(beerComm)
 
 # Libraries
 library(vegan) #version 2.5-7
@@ -21,21 +21,21 @@ library(tidyverse)
 ########## MAIN PART OF SCRIPT ##########
 
 # 1. Merge community data and metadata to make one file
-colnames(beerComm)
-colnames(beerMeta)
+#olnames(beerComm)
+#colnames(beerMeta)
 # Rename "sample" in beerComm to be "Sample.ID" to match beerMeta before merging based on this variable
-colnames(beerComm)[10] <- "Sample.ID"
+#colnames(beerComm)[10] <- "Sample.ID"
 # How do these dataframes overlap?
-sharedIDs <- intersect(unique(beerComm$Sample.ID), unique(beerMeta$Sample.ID))
-unique(beerComm$Sample.ID)[which(unique(beerComm$Sample.ID) %in% sharedIDs== FALSE)] #samples that occur in beerComm but not in beerMeta
-unique(beerMeta$Sample.ID)[which(unique(beerMeta$Sample.ID) %in% sharedIDs== FALSE)] #unhopped outdoors 3-1 is in beerMeta but not in beerComm
+#sharedIDs <- intersect(unique(beerComm$Sample.ID), unique(beerMeta$Sample.ID))
+#unique(beerComm$Sample.ID)[which(unique(beerComm$Sample.ID) %in% sharedIDs== FALSE)] #samples that occur in beerComm but not in beerMeta
+#unique(beerMeta$Sample.ID)[which(unique(beerMeta$Sample.ID) %in% sharedIDs== FALSE)] #unhopped outdoors 3-1 is in beerMeta but not in beerComm
 # since we lost the unhopped outdoor sample in the community data, we'll drop it from analysis 
 
-beerAllData <- merge(beerComm, beerMeta, by= "Sample.ID", all.x = TRUE)
-View(beerAllData)
+#beerAllData <- merge(beerComm, beerMeta, by= "Sample.ID", all.x = TRUE)
+#View(beerAllData)
 
 # Taxonomy
-unique(beerComm$dbHit) #only 26 unique ASVs!!
+#unique(beerComm$dbHit) #only 26 unique ASVs!!
 
 # 1. CLEAN UP TAXONOMY 
 colnames(beerComm)
@@ -67,9 +67,9 @@ beerTax <- tidyr::separate(as.data.frame(cleaned1), col = taxonomy, into= c("Kin
 # View(beerTax) 
 
 colnames(beerComm)
+unique(beerTax$dbHit == beerComm$dbHit) # since the order and the names of the dbHits are the same for beerTax and beerCommLess, 
 beerCommLess <- beerComm[,c(1:4,7:10)] #no need to keep dbhit or Taxonomy columns (since we fixed taxonomy)
 dim(beerCommLess)
-unique(beerTax$dbHit == beerCommLess$dbHit) # since the order and the names of the dbHits are the same for beerTax and beerCommLess, 
 # we can just do a simple cbind to merge them
 beerCommCleaned <- cbind(beerCommLess, beerTax)
 # View(beerCommCleaned)
@@ -77,7 +77,8 @@ beerCommCleaned <- cbind(beerCommLess, beerTax)
 # Make final table (As Noah asked for in class)
 commCompTable <- beerCommCleaned %>% 
   select(dbHit, read_cov, sample, Species) %>% 
-  pivot_wider(names_from=sample, values_from=read_cov)
+  pivot_wider(names_from=sample, values_from=read_cov) %>% 
+  mutate_all(~replace(., is.na(.), 0))
 # View(commCompTable)
 
 ################################
