@@ -35,9 +35,11 @@ step1 <- beerComm[,c(5,6)] #get only dbhit and taxonomy columns; keep all rows
 colnames(step1)
 
 ## ii. Remove extra taxonomic information between Eukaryote and Fungi, as well as subkingdom and subdivisions
+# btw, here is a great "cheat sheet" for using regular expressions in R: https://evoldyn.gitlab.io/evomics-2018/ref-sheets/R_strings.pdf
 step2 <- step1[,2] %>%  
-  stringr::str_replace("^.*Nucletmycea;", "") %>% 
-  stringr::str_replace("Dikarya;", "") %>% 
+  stringr::str_replace("^.*Nucletmycea;", "") %>% # "^" is start of string, "." is every character, and "*" is any length.
+  # So, this line means replace any and everything between the start of the line and "Nucletmycea" with nothing. 
+  stringr::str_replace("Dikarya;", "") %>% #replace "Dikarya" with "" (i.e. replace it with nothing!)
   stringr::str_replace("Saccharomycotina;", "") %>% 
   stringr::str_replace("Agaricomycotina;", "")
 colnames(step2)
