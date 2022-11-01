@@ -10,45 +10,32 @@ beerMeta <- read.delim(file="~/Desktop/CU_Research/wildBeer/project_data_and_tut
 head(beerComm)
 head(beerMeta)
 #View(beerComm)
+# View(beerMeta)
 
 # Libraries
 library(vegan) #version 2.5-7
 library(phyloseq)
 library(tidyverse)
 
-########################################
-
 ########## MAIN PART OF SCRIPT ##########
 
-# 1. Merge community data and metadata to make one file
-#olnames(beerComm)
-#colnames(beerMeta)
-# Rename "sample" in beerComm to be "Sample.ID" to match beerMeta before merging based on this variable
-#colnames(beerComm)[10] <- "Sample.ID"
-# How do these dataframes overlap?
-#sharedIDs <- intersect(unique(beerComm$Sample.ID), unique(beerMeta$Sample.ID))
-#unique(beerComm$Sample.ID)[which(unique(beerComm$Sample.ID) %in% sharedIDs== FALSE)] #samples that occur in beerComm but not in beerMeta
-#unique(beerMeta$Sample.ID)[which(unique(beerMeta$Sample.ID) %in% sharedIDs== FALSE)] #unhopped outdoors 3-1 is in beerMeta but not in beerComm
-# since we lost the unhopped outdoor sample in the community data, we'll drop it from analysis 
+########################################
+# MAKE PHYLOSEQ OBJECTS
+########################################
 
-#beerAllData <- merge(beerComm, beerMeta, by= "Sample.ID", all.x = TRUE)
-#View(beerAllData)
+# 1. CLEAN UP TAXONOMY
+# Right now, the fungal and bacteria taxonomy is not ordered the same. For example, the fungal taxonomic information
+# starts at Eukaryota, whereas the bacterial starts at bacteria (not prokaryote). And there is a whole lot of 
+# extra taxonomic information between "eukaryote" and "fungi" in the fungal ones.
 
-# Taxonomy
-#unique(beerComm$dbHit) #only 26 unique ASVs!!
-
-# 1. CLEAN UP TAXONOMY 
+## i. first, take a look at the raw data
 colnames(beerComm)
 head(beerComm)
 step1 <- beerComm[,c(5,6)] #get only dbhit and taxonomy columns; keep all rows
 colnames(step1)
-# Right now, the fungal and bacteria taxonomy is not ordered the same. For example, the fungal taxonomic information
-# starts at Eukaryota, whereas the bacterial starts at bacteria (not prokaryote). And there is a whole lot of 
-# extra taxonomic information between "eukaryote" and "fungi" in the fungal ones.
-step1[6,] #for example, here
 
-# Remove extra taxonomic information between Eukaryote and Fungi, as well as subkingdom and subdivisions
-step2 <- step1[,2] %>% 
+## ii. Remove extra taxonomic information between Eukaryote and Fungi, as well as subkingdom and subdivisions
+step2 <- step1[,2] %>%  
   stringr::str_replace("^.*Nucletmycea;", "") %>% 
   stringr::str_replace("Dikarya;", "") %>% 
   stringr::str_replace("Saccharomycotina;", "") %>% 
@@ -58,33 +45,65 @@ cleaned1 <- cbind(step1[,1], step2) #combine the cleaned taxonomy column with db
 colnames(cleaned1) <- colnames(step1) #make dbHit and taxonomy the column names again
 # View(cleaned1)
 
-# divide out taxonomy into different columns by level
+## iii. Divide out taxonomy into different columns by level
 beerTax <- tidyr::separate(as.data.frame(cleaned1), col = taxonomy, into= c("Kingdom", "Phylum", "Class", 
                                                                   "Order", "Family", "Genus", "Species"),
                     sep = ";")
-
-# View taxonomy file
 # View(beerTax) 
-
 colnames(beerComm)
 unique(beerTax$dbHit == beerComm$dbHit) # since the order and the names of the dbHits are the same for beerTax and beerCommLess, 
+# we can just do a simple cbind to merge them
 beerCommLess <- beerComm[,c(1:4,7:10)] #no need to keep dbhit or Taxonomy columns (since we fixed taxonomy)
 dim(beerCommLess)
-# we can just do a simple cbind to merge them
 beerCommCleaned <- cbind(beerCommLess, beerTax)
 # View(beerCommCleaned)
 
-# Make final table (As Noah asked for in class)
-commCompTable <- beerCommCleaned %>% 
-  select(dbHit, read_cov, sample, Species) %>% 
-  pivot_wider(names_from=sample, values_from=read_cov) %>% 
-  mutate_all(~replace(., is.na(.), 0))
+# 2. MAKE DATA "WIDER" (AS REQUIRED BY PHYLOSEQ)
+commCompTable <- beerCommCleaned %>% #beerCommCleaned is on this line because it is the object we are manipulating
+  select(read_cov, sample:Species) %>% #makes it so that we are manipulating the columns read_cov 
+  # and all of the columns from sample to Species (i.e. sample, dbHit, and all the taxonomy info)
+  filter(!(sample %in% c('NTC', 'ExtB1', 'CommStd'))) %>%  #remove these samples. Important because they are not in our metadata,
+  # and to make a phyloseq object, samples must be the same across metadata and ASV table
+  pivot_wider(names_from=sample, values_from=read_cov) %>% #make the samples new columns and the values in these new columns 
+  # come from read_cov
+  mutate_all(~replace(., is.na(.), 0)) #replace NAs with zeros
 # View(commCompTable)
 
-################################
-# 2. MAKE PHYLOSEQ OBJECT -Claire will do sometime before Monday :)
-################################
-# Make phyloseq object: Phyloseq wants 3-4 inputs: (1) a "taxonomy file" that has all the OTU names paired
-# with their taxonomy (i.e. Kingdom, Phylum, Class, Order, etc...), (2) an OTU table that has these OTUs with
-# information about how often these OTUs in the taxonomy file appear in each sample, and (3): metadata file, 
-# which links each sample to their metadata
+# 3. MAKE TAXONOMY TABLE FOR PHYLOSEQ
+# ASV/OTU names (i.e. dbHit for us!) should be the rownames and then their should be a distinct column for each taxonomic level
+taxTab <- commCompTable %>% 
+  column_to_rownames("dbHit") %>% #make it so that dbHit is now the row names of this dataframe
+  select(Kingdom:Species) #take only the columns corresponding to the taxonomy info from commCompTable
+# View(taxTab) #looks good!
+
+# 4. MAKE ASV/OTU TABLE FOR PHYLOSEQ
+# Here, phyloseq wants each taxon/ASV/OTU (here our dbHit name) as the rowname, with the columns as the separate
+# samples. The values in these columns are simply the number of counts of each ASV/OTU/taxon in each sample.
+# This is now the rest of the info in "commCompTable" made above
+ASVtab <- commCompTable %>% 
+  column_to_rownames("dbHit") %>% #make it so that dbHit is now the row names of this dataframe
+  select("HI4-3":"HI4-1")  #R is being tripped up by the fact that samples have "-3" and "-1" in their names, so I
+# added quotation marks. This is usually not necessary when using the select function.
+# View(ASVtab) #Yay! Looks as expected!
+
+# 5. FORMAT METADATA FILE FOR PHYLOSEQ
+# View(beerMeta)
+metaDat <- beerMeta %>% column_to_rownames("Sample.ID") #make the rownames the sample IDs. These now match up with 
+# View(metaDat)
+
+# 6. PUT TAXONOMY, ASV TABLE, AND METADATA TOGETHER TO MAKE PHYLOSEQ OBJECT
+# Need to use built-in phyloseq functions (tax_table, otu_table, and sample_data) to build each component of the phyloseq object
+TAX <- tax_table(as.matrix(taxTab))
+OTU <- otu_table(ASVtab, taxa_are_rows=T) 
+META <- sample_data(metaDat)
+beerPhyloseq <- phyloseq(TAX, OTU, META)
+
+# This is the phyloseq object! To see any of the component parts, re-use the functions above
+beerPhyloseq 
+sample_data(beerPhyloseq) #wahoo! Metadata!
+tax_table(beerPhyloseq) 
+otu_table(beerPhyloseq)
+
+
+
+
