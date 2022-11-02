@@ -91,6 +91,7 @@ ASVtab <- commCompTable %>%
 # 5. FORMAT METADATA FILE FOR PHYLOSEQ
 # View(beerMeta)
 metaDat <- beerMeta %>% column_to_rownames("Sample.ID") #make the rownames the sample IDs. These now match up with 
+# ASVtab
 # View(metaDat)
 
 # 6. PUT TAXONOMY, ASV TABLE, AND METADATA TOGETHER TO MAKE PHYLOSEQ OBJECT
@@ -106,6 +107,21 @@ sample_data(beerPhyloseq) #wahoo! Metadata!
 tax_table(beerPhyloseq) 
 otu_table(beerPhyloseq)
 
+########################################
+# DATA TRANSFORMATIONS AND DISTANCE MATRICES
+########################################
+ 
+# 1. Perform a Hellinger transformation on the data. This converts the data to proportions and 
+# then takes the square root.  
+beerHellinger_ps <- transform_sample_counts(beerPhyloseq, function(x) sqrt(x / sum(x)))
+otu_table(beerHellinger_ps) #looks about as expected
 
+# 2. Get Bray-Curtis dissimilarity matrix
+beerBCdist <- distance(beerHellinger_ps, method= "bray")
 
+# 3. Get Jaccard dissimilarity matrix
+beerJaccardPA_dist <- distance(beerHellinger_ps, method= "jaccard", binary= TRUE) #binary must be set to true, or this is quantitative Jaccard
 
+########################################
+# DATA VISUALIZATIONS
+########################################
