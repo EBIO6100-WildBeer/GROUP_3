@@ -101,14 +101,14 @@ OTU <- otu_table(ASVtab, taxa_are_rows=T)
 META <- sample_data(metaDat)
 beerPhyloseq <- phyloseq(TAX, OTU, META)
 
-# This is the phyloseq object! To see any of the component parts, re-use the functions above
+# This is the original phyloseq object! To see any of the component parts, re-use the functions above
 beerPhyloseq 
 sample_data(beerPhyloseq) #wahoo! Metadata!
 tax_table(beerPhyloseq) 
 otu_table(beerPhyloseq)
 
 ########################################
-# DATA TRANSFORMATIONS AND DISTANCE MATRICES
+# DATA TRANSFORMATIONS AND ORDINATION VISUALIZATIONS
 ########################################
  
 # 1. Perform a Hellinger transformation on the data. This converts the data to proportions and 
@@ -116,12 +116,71 @@ otu_table(beerPhyloseq)
 beerHellinger_ps <- transform_sample_counts(beerPhyloseq, function(x) sqrt(x / sum(x)))
 otu_table(beerHellinger_ps) #looks about as expected
 
-# 2. Get Bray-Curtis dissimilarity matrix
+# 2. Get dissimilarity matrices
+# Bray-Curtis (abundance based)
 beerBCdist <- distance(beerHellinger_ps, method= "bray")
 
-# 3. Get Jaccard dissimilarity matrix
+# Binary Jaccard  (presence/absence)
 beerJaccardPA_dist <- distance(beerHellinger_ps, method= "jaccard", binary= TRUE) #binary must be set to true, or this is quantitative Jaccard
 
+# 3. Make (unconstrained) ordinations for Bray-Curtis
+# PCoA
+ordBC_pcoa <- ordinate(beerHellinger_ps, "PCoA", "bray")
+BCordplot <- plot_ordination(beerHellinger_ps, ordBC_pcoa, type= "samples", color= "Hops", shape= "Location") +
+  geom_point(size=5) +
+  ggtitle("PCoA based On Bray-Curtis Dissimilarities")
+BCordplot
+
+# NMDS
+ordBC_nmds <- ordinate(beerHellinger_ps, "NMDS", "bray")
+ordBCNMDS_plot <- plot_ordination(beerHellinger_ps, ordBC_nmds, type= "samples", color= "Hops", shape= "Location") +
+  geom_point(size=5) +
+  ggtitle("NMDS based On Bray-Curtis Dissimilarities")
+ordBCNMDS_plot
+
+# 4 .Make (unconstrained) ordinations for binary Jaccard
+# PCoA
+ordPA_pcoa <- ordinate(beerHellinger_ps, "PCoA", "jaccard", binary= TRUE)
+PAordplot <- plot_ordination(beerHellinger_ps, ordPA_pcoa, type= "samples", color= "Hops", shape= "Location") +
+  geom_point(size=5) +
+  ggtitle("PCoA based on Binary Jaccard Dissimilarities")
+PAordplot
+
+# NMDS
+ordPA_nmds <- ordinate(beerHellinger_ps, "NMDS", "jaccard", binary= TRUE)
+ordBCNMDS_plot <- plot_ordination(beerHellinger_ps, ordPA_nmds, type= "samples", color= "Hops", shape= "Location") +
+  geom_point(size=5) +
+  ggtitle("NMDS based on Binary Jaccard Dissimilarities")
+ordBCNMDS_plot
+
 ########################################
-# DATA VISUALIZATIONS
+# STACKED BARPLOT FOR RELATIVE ABUNDANCE
 ########################################
+ps_rel_abund <- phyloseq::transform_sample_counts(beerHellinger_ps, function(x){x / sum(x)})
+
+plot_bar(ps_rel_abund, fill = "Genus") +
+  geom_bar(aes(color = Genus, fill = Genus), stat = "identity", position = "stack") +
+  labs(x = "", y = "Relative Abundance\n") +
+  facet_wrap(~ Hops, scales = "free") +
+  theme(panel.background = element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+###########################################
+# Filter out controls and wonky samples
+########################################
+# Remove "control" location. This is now a phyloseq object with everything but the controls. For some
+# reason, I couldn't filter out on location and "X" at the same time, so I did it in two steps
+step1_ps <- subset_samples(beerPhyloseq, Location != "C") 
+
+# Remove wonky samples (control are already removed). 
+beerPS_cleaned <- subset_samples(step1_ps, X != "24") # I removed sample 24, i.e. the hopped indoors 5, week 1
+
+# Now, make 2 phyloseq objects, one with only the hopped samples and the other with only unhopped ones
+beerHopped_ps <- subset_samples(beerPS_cleaned, Hops == "H") #get only hopped samples
+
+beerUnhopped_ps <- subset_samples(beerPS_cleaned, Hops == "U") #get only unhopped samples
+
+
+
+
