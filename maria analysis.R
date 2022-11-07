@@ -11,6 +11,7 @@ beerMeta <- read.csv("~/Documents/PhD projects/beer metagenomics/metadata.csv")
 library(vegan) #version 2.5-7
 library(phyloseq)
 library(tidyverse)
+library(dendextend)
 
 # MAKE PHYLOSEQ OBJECTS ----
 
@@ -198,3 +199,6 @@ beerHopped_ps <- subset_samples(beerPS_cleaned, Hops == "H") #get only hopped sa
 
 beerUnhopped_ps <- subset_samples(beerPS_cleaned, Hops == "U") #get only unhopped samples
 
+
+# QUESTION 1 ----
+## Hopped vs unhopped ----
