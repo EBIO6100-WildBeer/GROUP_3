@@ -120,7 +120,7 @@ otu_table(beerPhyloseq)
 step1_ps <- subset_samples(beerPhyloseq, Location != "C") 
 
 # Remove wonky samples (control are already removed). 
-beerPS_cleaned <- subset_samples(step1_ps, X != "24") # I removed sample 24, i.e. the hopped indoors 5, week 1
+beerPS_cleaned <- subset_samples(step1_ps, Sample.Description != "Unhopped, Indoor, Jar 5, wk1, filter 1") # I removed sample 24, i.e. the hopped indoors 5, week 1
 
 # Make 2 phyloseq objects, one with only the hopped samples and the other with only unhopped ones
 beerHopped_ps <- subset_samples(beerPS_cleaned, Hops == "H") #get only hopped samples
