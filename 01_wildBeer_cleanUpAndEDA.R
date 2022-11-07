@@ -19,6 +19,7 @@ head(beerMeta)
 library(vegan) #version 2.5-7
 library(phyloseq)
 library(tidyverse)
+library(dendextend)
 
 ########## MAIN PART OF SCRIPT ##########
 
