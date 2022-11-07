@@ -127,6 +127,10 @@ beerHopped_ps <- subset_samples(beerPS_cleaned, Hops == "H") #get only hopped sa
 
 beerUnhopped_ps <- subset_samples(beerPS_cleaned, Hops == "U") #get only unhopped samples
 
+beerWeek1_ps <- subset_samples(beerPS_cleaned, timepoint == "1 week") #get only hopped samples
+
+beerWeek3_ps <- subset_samples(beerPS_cleaned, timepoint == "3 week") #get only unhopped samples
+
 ########################################
 # DATA TRANSFORMATIONS AND ORDINATION VISUALIZATIONS
 ########################################
