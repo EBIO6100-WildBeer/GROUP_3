@@ -5,8 +5,10 @@
 ########## SET UP ##########
 
 # Read in files and check them out (from github repo on local machine)
+# Claire
 beerComm <- read.csv(file="~/Desktop/CU_Research/wildBeer/project_data_and_tutorials/data/2022_10_20_WildBeer.phyloFlash.extractedSSUclassifications.csv") #ASV table (sort of)
 beerMeta <- read.delim(file="~/Desktop/CU_Research/wildBeer/project_data_and_tutorials/data/2022_10_12_WildBeer_metadata.tsv", sep="\t", header=TRUE) #metadata
+
 head(beerComm)
 head(beerMeta)
 #View(beerComm)
@@ -165,6 +167,31 @@ plot_bar(ps_rel_abund, fill = "Genus") +
   theme(panel.background = element_blank(),
         axis.text.x=element_blank(),
         axis.ticks.x=element_blank())
+
+# HEATMAP ---- 
+plot_heatmap(ps_rel_abund, method = "PCoA", distance = "bray", 
+             taxa.label = "Genus", taxa.order = "Genus", 
+             low="beige", high="red", na.value="beige")
+
+# CLUSTER ---- 
+
+#Extract OTU table and compute BC
+ps_rel_otu <- data.frame(phyloseq::otu_table(ps_rel_abund))
+ps_rel_otu <- t(ps_rel_otu)
+bc_dist <- vegan::vegdist(ps_rel_otu, method = "bray")
+as.matrix(bc_dist)
+
+#Save as dendrogram
+ward <- as.dendrogram(hclust(bc_dist, method = "ward.D2"))
+
+#Provide color codes (looking at hopped vs un-hopped)
+meta <- data.frame(phyloseq::sample_data(ps_rel_abund))
+colorCode <- c(H = "red", `U` = "blue")
+labels_colors(ward) <- colorCode[meta$Hops][order.dendrogram(ward)]
+
+#Plot
+plot(ward)
+
 
 ###########################################
 # Filter out controls and wonky samples
