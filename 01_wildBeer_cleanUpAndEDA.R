@@ -2,14 +2,15 @@
 # Begun October 24, 2022
 ########################################
 
+### FIRST, SET TO YOUR OWN WORKING DIRECTORY DIRECTORY WHERE project_data_and_tutorials IS ######
 ########## SET UP ##########
 
 # Read in files and check them out (from github repo on local machine)
-beerComm <- read.csv(file="~/Desktop/CU_Research/wildBeer/project_data_and_tutorials/data/2022_10_20_WildBeer.phyloFlash.extractedSSUclassifications.csv") #ASV table (sort of)
-beerMeta <- read.delim(file="~/Desktop/CU_Research/wildBeer/project_data_and_tutorials/data/2022_10_12_WildBeer_metadata.tsv", sep="\t", header=TRUE) #metadata
+beerComm <- read.csv(file="project_data_and_tutorials/data/2022_10_20_WildBeer.phyloFlash.extractedSSUclassifications.csv") #ASV table (sort of)
+beerMeta <- read.delim(file="project_data_and_tutorials/data/2022_10_12_WildBeer_metadata.tsv", sep="\t", header=TRUE) #metadata
 head(beerComm)
 head(beerMeta)
-#View(beerComm)
+# View(beerComm)
 # View(beerMeta)
 
 # Libraries
@@ -176,10 +177,14 @@ step1_ps <- subset_samples(beerPhyloseq, Location != "C")
 # Remove wonky samples (control are already removed). 
 beerPS_cleaned <- subset_samples(step1_ps, X != "24") # I removed sample 24, i.e. the hopped indoors 5, week 1
 
-# Now, make 2 phyloseq objects, one with only the hopped samples and the other with only unhopped ones
+# Make 2 phyloseq objects, one with only the hopped samples and the other with only unhopped ones
 beerHopped_ps <- subset_samples(beerPS_cleaned, Hops == "H") #get only hopped samples
 
 beerUnhopped_ps <- subset_samples(beerPS_cleaned, Hops == "U") #get only unhopped samples
+
+# 
+
+
 
 
 
