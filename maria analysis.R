@@ -218,15 +218,18 @@ plot(ward)
 # HYPOTHESIS TESTING ---- 
 
 # QUESTION 1 ----
-## Hopped vs unhopped ----
+## Hopped vs un-hopped ----
 ### Mantel test ----
 
 # QUESTION 2 ----
 ## Indoor vs outdoor ----
 ### Mantel test ----
-### permANOVA ----
+### PERMANOVA ----
+
 
 # QUESTION 3 ----
 ## Timepoints ----
 ### Mantel test ----
-### permANOVA ----
+### PERMANOVA ----
+adonis2(distance(beerPS_cleaned, method = "bray") ~ timepoint,
+       data = metaDat)
