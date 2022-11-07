@@ -111,13 +111,28 @@ sample_data(beerPhyloseq) #wahoo! Metadata!
 tax_table(beerPhyloseq) 
 otu_table(beerPhyloseq)
 
+###########################################
+# Filter out controls and wonky samples
+########################################
+# Remove "control" location. This is now a phyloseq object with everything but the controls. For some
+# reason, I couldn't filter out on location and "X" at the same time, so I did it in two steps
+step1_ps <- subset_samples(beerPhyloseq, Location != "C") 
+
+# Remove wonky samples (control are already removed). 
+beerPS_cleaned <- subset_samples(step1_ps, X != "24") # I removed sample 24, i.e. the hopped indoors 5, week 1
+
+# Make 2 phyloseq objects, one with only the hopped samples and the other with only unhopped ones
+beerHopped_ps <- subset_samples(beerPS_cleaned, Hops == "H") #get only hopped samples
+
+beerUnhopped_ps <- subset_samples(beerPS_cleaned, Hops == "U") #get only unhopped samples
+
 ########################################
 # DATA TRANSFORMATIONS AND ORDINATION VISUALIZATIONS
 ########################################
  
 # 1. Perform a Hellinger transformation on the data. This converts the data to proportions and 
 # then takes the square root.  
-beerHellinger_ps <- transform_sample_counts(beerPhyloseq, function(x) sqrt(x / sum(x)))
+beerHellinger_ps <- transform_sample_counts(beerPS_cleaned, function(x) sqrt(x / sum(x)))
 otu_table(beerHellinger_ps) #looks about as expected
 
 # 2. Get dissimilarity matrices
@@ -195,20 +210,6 @@ labels_colors(ward) <- colorCode[meta$Hops][order.dendrogram(ward)]
 plot(ward)
 
 
-###########################################
-# Filter out controls and wonky samples
-########################################
-# Remove "control" location. This is now a phyloseq object with everything but the controls. For some
-# reason, I couldn't filter out on location and "X" at the same time, so I did it in two steps
-step1_ps <- subset_samples(beerPhyloseq, Location != "C") 
-
-# Remove wonky samples (control are already removed). 
-beerPS_cleaned <- subset_samples(step1_ps, X != "24") # I removed sample 24, i.e. the hopped indoors 5, week 1
-
-# Make 2 phyloseq objects, one with only the hopped samples and the other with only unhopped ones
-beerHopped_ps <- subset_samples(beerPS_cleaned, Hops == "H") #get only hopped samples
-
-beerUnhopped_ps <- subset_samples(beerPS_cleaned, Hops == "U") #get only unhopped samples
 
 # 
 
