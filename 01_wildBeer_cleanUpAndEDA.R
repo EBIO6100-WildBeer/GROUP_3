@@ -116,12 +116,63 @@ otu_table(beerPhyloseq)
 beerHellinger_ps <- transform_sample_counts(beerPhyloseq, function(x) sqrt(x / sum(x)))
 otu_table(beerHellinger_ps) #looks about as expected
 
-# 2. Get Bray-Curtis dissimilarity matrix
+# 2. Get Bray-Curtis dissimilarity matrix and ordination
 beerBCdist <- distance(beerHellinger_ps, method= "bray")
+ordBC <- ordinate(beerHellinger_ps, "PCoA", "bray")
+BCordplot <- plot_ordination(beerHellinger_ps, ordBC, type= "samples", color= "Hops", shape= "Location") +
+  geom_point(size=5) +
+  ggtitle("PCoA based On Bray-Curtis Dissimilarities")
+BCordplot
 
-# 3. Get Jaccard dissimilarity matrix
+beerBCdist <- distance(beerHellinger_ps, method= "bray")
+ordBCNMDS <- ordinate(beerHellinger_ps, "NMDS", "bray")
+ordBCNMDS_plot <- plot_ordination(beerHellinger_ps, ordBC, type= "samples", color= "Hops", shape= "Location") +
+  geom_point(size=5) +
+  ggtitle("NMDS based On Bray-Curtis Dissimilarities")
+ordBCNMDS_plot
+
+
+
+# 3. Get Jaccard dissimilarity matrix and ordination
 beerJaccardPA_dist <- distance(beerHellinger_ps, method= "jaccard", binary= TRUE) #binary must be set to true, or this is quantitative Jaccard
+ordPA <- ordinate(beerHellinger_ps, "PCoA", "jaccard", binary= TRUE)
+PAordplot <- plot_ordination(beerHellinger_ps, ordPA, type= "samples", color= "Hops", shape= "Location") +
+  geom_point(size=5) +
+  ggtitle("PCoA based On Binary Jaccard Dissimilarities")
+PAordplot
 
 ########################################
 # DATA VISUALIZATIONS
 ########################################
+ps_rel_abund <- phyloseq::transform_sample_counts(beerHellinger_ps, function(x){x / sum(x)})
+
+plot_bar(ps_rel_abund, fill = "Genus") +
+  geom_bar(aes(color = Genus, fill = Genus), stat = "identity", position = "stack") +
+  labs(x = "", y = "Relative Abundance\n") +
+  facet_wrap(~ Hops, scales = "free") +
+  theme(panel.background = element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+
+############################
+# PERMANOVA
+############################
+# 2. Function to get ASV table out of phyloseq so that we can view it better
+# (Inspired by similar function at https://jacobrprice.github.io/2017/08/26/phyloseq-to-vegan-and-back.html)
+ASVs_outta_ps <- function(physeq){ #input is a phyloseq object
+  ASVTable <- otu_table(physeq)
+  return(as.data.frame(ASVTable))
+}
+
+beerHell_ASVs <- ASVs_outta_ps(beerHellinger_ps)
+beerHell_BCdist <- vegdist(t(beerHell_ASVs), method= "bray")
+View(as.matrix(beerHell_BCdist))
+
+
+beerMeta2 <- beerMeta %>% column_to_rownames("Sample.ID")
+
+HOPSpermanova <- adonis(beerHell_BCdist ~ treatment, data = beerMeta2, method= "bray")
+
+View(as.matrix(beerHell_BCdist))
+colnames(beerMeta)
