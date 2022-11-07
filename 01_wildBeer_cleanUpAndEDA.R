@@ -6,15 +6,10 @@
 ########## SET UP ##########
 
 # Read in files and check them out (from github repo on local machine)
-<<<<<<< HEAD
 beerComm <- read.csv(file="project_data_and_tutorials/data/2022_10_20_WildBeer.phyloFlash.extractedSSUclassifications.csv") #ASV table (sort of)
 beerMeta <- read.delim(file="project_data_and_tutorials/data/2022_10_12_WildBeer_metadata.tsv", sep="\t", header=TRUE) #metadata
-=======
-# Claire
-beerComm <- read.csv(file="~/Desktop/CU_Research/wildBeer/project_data_and_tutorials/data/2022_10_20_WildBeer.phyloFlash.extractedSSUclassifications.csv") #ASV table (sort of)
-beerMeta <- read.delim(file="~/Desktop/CU_Research/wildBeer/project_data_and_tutorials/data/2022_10_12_WildBeer_metadata.tsv", sep="\t", header=TRUE) #metadata
 
->>>>>>> 281f2fd3cd9379158be2350421a943078e7a6051
+
 head(beerComm)
 head(beerMeta)
 # View(beerComm)
