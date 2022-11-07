@@ -1,6 +1,7 @@
 # Wild Beer Metagenomics- Data Clean Up and Exploratory Data Analysis
 # Begun October 24, 2022
 ########################################
+rm(list=ls())
 
 ### FIRST, SET TO YOUR OWN WORKING DIRECTORY DIRECTORY WHERE project_data_and_tutorials IS ######
 ########## SET UP ##########
