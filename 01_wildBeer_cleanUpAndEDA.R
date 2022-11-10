@@ -3,14 +3,12 @@
 ########################################
 rm(list=ls())
 
-### FIRST, SET TO YOUR OWN WORKING DIRECTORY DIRECTORY WHERE project_data_and_tutorials IS ######
+### FIRST, SET TO YOUR OWN WORKING DIRECTORY DIRECTORY WHERE project_data_and_tutorials is ######
 ########## SET UP ##########
 
 # Read in files and check them out (from github repo on local machine)
 beerComm <- read.csv(file="project_data_and_tutorials/data/2022_10_20_WildBeer.phyloFlash.extractedSSUclassifications.csv") #ASV table (sort of)
 beerMeta <- read.delim(file="project_data_and_tutorials/data/2022_10_12_WildBeer_metadata.tsv", sep="\t", header=TRUE) #metadata
-
-
 head(beerComm)
 head(beerMeta)
 # View(beerComm)
@@ -112,15 +110,20 @@ sample_data(beerPhyloseq) #wahoo! Metadata!
 tax_table(beerPhyloseq) 
 otu_table(beerPhyloseq)
 
-###########################################
-# Filter out controls and wonky samples
 ########################################
-# Remove "control" location. This is now a phyloseq object with everything but the controls. For some
+# DATA TRANSFORMATIONS, SUBSETTING, AND DISSIMILARITIES
+########################################
+# 1. Perform a Hellinger transformation on the data. This converts the data to proportions and 
+# then takes the square root.  
+beerHellinger_ps <- transform_sample_counts(beerPhyloseq, function(x) sqrt(x / sum(x)))
+otu_table(beerHellinger_ps) #looks about as expected
+
+# 2. Remove "control" location. This is now a phyloseq object with everything but the controls. For some
 # reason, I couldn't filter out on location and "X" at the same time, so I did it in two steps
-step1_ps <- subset_samples(beerPhyloseq, Location != "C") 
+step1_ps <- subset_samples(beerHellinger_ps, Location != "C") 
 
 # Remove wonky samples (control are already removed). 
-beerPS_cleaned <- subset_samples(step1_ps, Sample.Description != "Unhopped, Indoor, Jar 5, wk1, filter 1") # I removed sample 24, i.e. the hopped indoors 5, week 1
+beerPS_cleaned <- subset_samples(step1_ps, Sample.Description != "Unhopped, Indoor, Jar 5, wk1, filter 1") #sample has no Saccharomyces and low # of reads
 
 # Make 2 phyloseq objects, one with only the hopped samples and the other with only unhopped ones
 beerHopped_ps <- subset_samples(beerPS_cleaned, Hops == "H") #get only hopped samples
@@ -131,21 +134,20 @@ beerWeek1_ps <- subset_samples(beerPS_cleaned, timepoint == "1 week") #get only 
 
 beerWeek3_ps <- subset_samples(beerPS_cleaned, timepoint == "3 week") #get only unhopped samples
 
-########################################
-# DATA TRANSFORMATIONS AND ORDINATION VISUALIZATIONS
-########################################
- 
-# 1. Perform a Hellinger transformation on the data. This converts the data to proportions and 
-# then takes the square root.  
-beerHellinger_ps <- transform_sample_counts(beerPS_cleaned, function(x) sqrt(x / sum(x)))
-otu_table(beerHellinger_ps) #looks about as expected
-
 # 2. Get dissimilarity matrices
+# i. All samples
 # Bray-Curtis (abundance based)
 beerBCdist <- distance(beerHellinger_ps, method= "bray")
-
 # Binary Jaccard  (presence/absence)
 beerJaccardPA_dist <- distance(beerHellinger_ps, method= "jaccard", binary= TRUE) #binary must be set to true, or this is quantitative Jaccard
+# ii. hops only
+hoppedBCdist <- distance(beerHopped_ps, method= "bray")
+# iii. unhopped only
+unhoppedBCdist <- distance(beerUnhopped_ps, method= "bray")
+# iv. week 1 only
+week1_BCdist <- distance(beerWeek1_ps, method= "bray")
+# v. week 3 only
+week3_BCdist <- distance(beerWeek3_ps, method= "bray")
 
 # 3. Make (unconstrained) ordinations for Bray-Curtis
 # PCoA
