@@ -65,6 +65,8 @@ unique(beerTax$dbHit == beerComm$dbHit) # since the order and the names of the d
 beerCommLess <- beerComm[,c(1:4,7:10)] #no need to keep dbhit or Taxonomy columns (since we fixed taxonomy)
 dim(beerCommLess)
 beerCommCleaned <- cbind(beerCommLess, beerTax)
+which(beerCommCleaned$dbHit== "KR952335.21166.22627") #find the row that has the mitochondrion in it, row 96
+beerCommCleaned <- beerCommCleaned[-96,] #remove this mitochondrion row
 # View(beerCommCleaned)
 
 # 2. MAKE DATA "WIDER" (AS REQUIRED BY PHYLOSEQ)
