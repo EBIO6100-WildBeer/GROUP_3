@@ -215,6 +215,8 @@ plot_heatmap(beerPS_cleaned, method = "PCoA", distance = "bray",
              taxa.label = "Genus", taxa.order = "Genus", 
              low="beige", high="red", na.value="beige")
 
+# Now, we want to make a heat map that is grouped by 
+
 
 # CLUSTER ---- 
 
@@ -555,26 +557,6 @@ anova(mod_dispweek3_QJ, permutations = 9999) #YES!!! P = 0.001308 **
 mod_dispweek3_QJ
 
 plot(mod_dispweek3_QJ)
-
-# Relationship of Bray-Curtis to quantitative Jaccard function
-QJfromBC <- function(BCnumberVector){
-  QJaccVals <- vector(length=length(BCnumberVector))
-  for (j in 1:length(QJaccVals)){
-    QJaccVals[j] <- (2*BCnumberVector[j])/(1 + BCnumberVector[j])
-  }
-  return(cbind(BCnumberVector, QJaccVals))
-}
-
-# simulate Bray_curtis dissims
-BCs <- seq(0,1, 0.01)
-BCQJs <- QJfromBC(BCs)
-
-plot(BCQJs)
-
-week1_BC_vec <- c(0.1799, 0.1218, 0.1807, 0.1022)
-week3_BC_vec <- c(0.17350, 0.06491, 0.30657, 0.18005)
-week1_qJ_vec <- c(0.2634, 0.2010, 0.2712, 0.1698)
-week3_qJ_vec <- c(0.2617, 0.1142, 0.4009, 0.2670)
 
 centroids <- cbind(week1_BC_vec, week3_BC_vec , week1_qJ_vec, week3_qJ_vec)
 rownames(centroids) <- c("HI", "HO", "UI", "UO")
