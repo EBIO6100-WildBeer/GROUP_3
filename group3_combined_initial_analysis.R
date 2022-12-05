@@ -110,7 +110,7 @@ OTU <- otu_table(ASVtab, taxa_are_rows=T)
 META <- sample_data(metaDat)
 beerPhyloseq <- phyloseq(TAX, OTU, META)
 
-# This is the original phyloseq object! To see any of the component parts, re-use the functions above
+# This is the original h object! To see any of the component parts, re-use the functions above
 beerPhyloseq 
 sample_data(beerPhyloseq) #wahoo! Metadata!
 tax_table(beerPhyloseq) 
@@ -215,8 +215,21 @@ plot_heatmap(beerPS_cleaned, method = "PCoA", distance = "bray",
              taxa.label = "Genus", taxa.order = "Genus", 
              low="beige", high="red", na.value="beige")
 
-# Now, we want to make a heat map that is grouped by 
+# Now, we want to make a heat map where the species are more specific
+# Make a second phyloseq object for heat map with dbHit results
+taxaTable2 <- as.data.frame(tax_table(beerPS_cleaned))
+species2 <- c("Saccharomyces cerevisiae S288C", "Lelliottia amnigena str. 1", "Gluconobacter oxydans",              
+              "Lactobacillus paracasei", "Lactobacillus harbinensis DSM 16991", "Enterobacter sp. 638",                
+              "Lactobacillus harbinensis str. 2", "Lactobacillus harbinensis str. 3", "Enterobacter sp. Iso-A4",            
+              "Lelliottia amnigena str. 2", "Wickerhamomyces anomalus NRRL Y-366", "Pseudomonas sp. 02C 26",             
+              "Pseudomonas monteilii", "Pseudescherichia vulneris", "Lactobacillus parabuchneri str. 1",         
+              "Lactobacillus brevis ATCC 367", "Enterobacter cloacae", "Lactobacillus parabuchneri str. 2")  
+taxaTable2$Species <- species2
 
+TAX2 <- tax_table(as.matrix(taxaTable2))
+
+beerPS_cleanedSpecific <- phyloseq(TAX2, otu_table(beerPS_cleaned), sample_data(beerPS_cleaned))
+tax_table(beerPS_cleanedSpecific)
 
 # CLUSTER ---- 
 
@@ -502,8 +515,6 @@ unhopTimeIStable$index
 unhopTimeIStable$index[which(HopTimeIStable$index==1)] <- "1 week"
 unhopTimeIStable$index[which(HopTimeIStable$index==2)] <- "3 weeks"
 #View(unhopTimeIStable)
-
-
 
 
 # QUESTION 5: Does the fungal/bacterial ratio change across week?
